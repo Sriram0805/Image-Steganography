@@ -1,0 +1,10 @@
+Sample Naming Conventions:
+Original Image for Encoding:
+  Download the original image and name it input_image.png.
+Encoded Image:
+  After encoding your data, name the output as encoded_image.png.
+Decoded Image:
+  Use the encoded_image.png for decoding in your program. The result will be the hidden message.
+Sample Image Types:
+You can download any common image format such as .png, .jpg, or .jpeg. Ensure the image size is reasonable, such as 500x500 pixels or 1024x768 pixels, to avoid performance issues when processing larger images.
+After downloading the images, rename them accordingly and upload them to Google Colab for your steganography program.

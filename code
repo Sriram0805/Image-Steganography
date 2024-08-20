@@ -1,0 +1,145 @@
+To run this image steganography program in Google Colab and view the output, follow these steps:
+
+1. Install Required Libraries:
+Google Colab may not have the required PIL (Python Imaging Library) installed by default. You can install it using Pillow, which is a fork of PIL.
+
+python
+!pip install pillow
+2. Upload an Image File:
+To encode the data into an image, you need an image file. You can upload the image directly into Colab from your local system using the following code:
+
+python
+from google.colab import files
+uploaded = files.upload()
+After running this cell, a file upload dialog will appear where you can select the image file you want to use.
+
+3. Running the Steganography Code:
+Here’s how to adapt the code to run in Google Colab. I've slightly modified it to streamline the input process and use the uploaded file.
+
+python
+from PIL import Image
+
+# Convert encoding data into 8-bit binary form using ASCII value of characters
+def genData(data):
+    newd = []
+    for i in data:
+        newd.append(format(ord(i), '08b'))
+    return newd
+
+# Pixels are modified according to the 8-bit binary data and finally returned
+def modPix(pix, data):
+    datalist = genData(data)
+    lendata = len(datalist)
+    imdata = iter(pix)
+
+    for i in range(lendata):
+        pix = [value for value in imdata.__next__()[:3] +
+                            imdata.__next__()[:3] +
+                            imdata.__next__()[:3]]
+
+        # Pixel value should be made odd for 1 and even for 0
+        for j in range(0, 8):
+            if (datalist[i][j] == '0' and pix[j] % 2 != 0):
+                pix[j] -= 1
+            elif (datalist[i][j] == '1' and pix[j] % 2 == 0):
+                pix[j] -= 1 if pix[j] != 0 else -1
+
+        if i == lendata - 1:
+            if pix[-1] % 2 == 0:
+                pix[-1] -= 1
+        else:
+            if pix[-1] % 2 != 0:
+                pix[-1] -= 1
+
+        pix = tuple(pix)
+        yield pix[0:3]
+        yield pix[3:6]
+        yield pix[6:9]
+
+def encode_enc(newimg, data):
+    w = newimg.size[0]
+    (x, y) = (0, 0)
+
+    for pixel in modPix(newimg.getdata(), data):
+        newimg.putpixel((x, y), pixel)
+        if x == w - 1:
+            x = 0
+            y += 1
+        else:
+            x += 1
+
+def encode():
+    img = list(uploaded.keys())[0]  # Use uploaded file
+    image = Image.open(img, 'r')
+
+    data = input("Enter data to be encoded: ")
+    if len(data) == 0:
+        raise ValueError('Data is empty')
+
+    newimg = image.copy()
+    encode_enc(newimg, data)
+
+    new_img_name = "encoded_image.png"  # Save as a new image
+    newimg.save(new_img_name)
+    print(f"Image saved as {new_img_name}")
+
+    # Display the encoded image
+    display(newimg)
+
+def decode():
+    img = list(uploaded.keys())[0]  # Use uploaded file
+    image = Image.open(img, 'r')
+
+    data = ''
+    imgdata = iter(image.getdata())
+
+    while True:
+        pixels = [value for value in imgdata.__next__()[:3] +
+                                imgdata.__next__()[:3] +
+                                imgdata.__next__()[:3]]
+
+        binstr = ''
+        for i in pixels[:8]:
+            binstr += '0' if i % 2 == 0 else '1'
+
+        data += chr(int(binstr, 2))
+        if pixels[-1] % 2 != 0:
+            return data
+
+def main():
+    choice = int(input(":: Welcome to Steganography ::\n1. Encode\n2. Decode\n"))
+    if choice == 1:
+        encode()
+    elif choice == 2:
+        print("Decoded Word: " + decode())
+    else:
+        print("Invalid choice!")
+
+# Run the program
+main()
+4. Running the Program:
+Upload an image file using the files.upload() function as shown in step 2.
+After uploading, the program will prompt you to choose between encoding and decoding.
+Example Scenario (Output):
+Let's say you choose to encode a message:
+
+Encode:
+
+The program asks you to enter the message you'd like to encode into the image, such as "Hello World".
+After encoding, the modified image will be saved as "encoded_image.png" and displayed.
+You can download it using:
+
+python
+files.download('encoded_image.png')
+Decode:
+
+The program will extract the hidden message from the encoded image and display the decoded message, such as "Hello World".
+Viewing Output:
+For Encoding:
+You will see the encoded image displayed within the notebook, and it will be saved as "encoded_image.png".
+
+For Decoding:
+The hidden message will be printed to the notebook's output.
+
+Notes:
+Make sure the image you're using has enough pixels to hide the message, as the length of the message affects how many pixels need to be modified.
